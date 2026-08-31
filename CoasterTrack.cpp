@@ -144,7 +144,7 @@ glm::vec3 CoasterTrack::rotation_vec(const glm::vec3 direction) const {
     return {rotate * glm::vec4(direction, 0.0f)};
 }
 
-void CoasterTrack::handle_movement(const std::string& type, bool undo) {
+void CoasterTrack::handle_movement(const std::string& type, const bool undo) {
     const auto& data = tracks.at(type);
     if (!undo) {
         position += rotation_vec(data.end_point - data.start_point);
@@ -213,17 +213,17 @@ std::vector<std::shared_ptr<SceneObject> > CoasterTrack::clear_tracks() {
     return return_tracks;
 }
 
-void CoasterTrack::start_cart(const float speed) {
+void CoasterTrack::start_cart(const double speed) {
     is_moving = true;
     cart_speed = speed;
 }
 
-void CoasterTrack::set_cart_speed(float speed) {
+void CoasterTrack::set_cart_speed(double speed) {
     if (speed < 0) speed = 0;
     cart_speed = speed;
 }
 
-void CoasterTrack::change_cart_speed(const float change) {
+void CoasterTrack::change_cart_speed(const double change) {
     set_cart_speed(cart_speed + change);
 }
 
@@ -231,7 +231,7 @@ void CoasterTrack::stop_cart() {
     is_moving = false;
 }
 
-std::vector<std::shared_ptr<SceneObject> > CoasterTrack::get_model_objs() {
+std::vector<std::shared_ptr<SceneObject> > CoasterTrack::get_model_objs() const {
     auto objs = model_objects;
     if (cart) objs.push_back(cart);
     return objs;
@@ -245,7 +245,7 @@ glm::vec3 CoasterTrack::get_cart_size() const {
     return GlmMaths::mat_info(cart->model_matrix).scale;
 }
 
-void CoasterTrack::update(int time_elapsed, int prev_time_elapsed) {
+void CoasterTrack::update(double time_elapsed, double prev_time_elapsed) {
     if (!is_moving || track.empty() || !cart) return;
 
     if (current_segment >= track.size()) {
@@ -253,13 +253,13 @@ void CoasterTrack::update(int time_elapsed, int prev_time_elapsed) {
         segment_progress = 0.0f;
     }
 
-    const auto delta_time = static_cast<float>(time_elapsed - prev_time_elapsed);
+    const auto delta_time = time_elapsed - prev_time_elapsed;
     if (delta_time <= 0.0f) return;
     segment_progress += cart_speed * delta_time;
 
     while (segment_progress >= 1.0f) {
         segment_progress -= 1.0f;
-        current_segment = (current_segment + 1) % track.size();
+        current_segment = (current_segment + 1) % static_cast<int>(track.size());
     }
 
     glm::vec3 segment_position = segment_positions[current_segment];
@@ -275,28 +275,28 @@ void CoasterTrack::update(int time_elapsed, int prev_time_elapsed) {
 
     if (control_points.size() < 2) return;
 
-    const float scaled_progress = segment_progress * static_cast<float>(control_points.size() - 1);
+    const double scaled_progress = segment_progress * static_cast<double>(control_points.size() - 1);
     const int point_index = std::min(
         static_cast<int>(scaled_progress),
         static_cast<int>(control_points.size()) - 2
     );
-    const float local_progress = scaled_progress - static_cast<float>(point_index);
+    const double local_progress = scaled_progress - static_cast<double>(point_index);
 
     const glm::vec3 p0 = control_points[std::max(point_index - 1, 0)];
     const glm::vec3 p1 = control_points[point_index];
     const glm::vec3 p2 = control_points[point_index + 1];
     const glm::vec3 p3 = control_points[std::min(point_index + 2, static_cast<int>(control_points.size()) - 1)];
 
-    const glm::vec3 local_cart_position = glm::catmullRom(p0, p1, p2, p3, local_progress);
+    const glm::vec3 local_cart_position = glm::catmullRom(p0, p1, p2, p3, static_cast<float>(local_progress));
 
-    const float tangent_sample_progress = std::min(local_progress + 0.01f, 1.0f);
-    const glm::vec3 local_next_position = glm::catmullRom(p0, p1, p2, p3, tangent_sample_progress);
+    const double tangent_sample_progress = std::min(local_progress + 0.01, 1.0);
+    const glm::vec3 local_next_position = glm::catmullRom(p0, p1, p2, p3, static_cast<float>(tangent_sample_progress));
     const glm::vec3 local_tangent = glm::normalize(local_next_position - local_cart_position);
 
     glm::mat4 segment_rotation_matrix(1.0f);
     segment_rotation_matrix = glm::rotate(segment_rotation_matrix, segment_rotation, glm::vec3(0, 1, 0));
 
-    const glm::vec3 world_offset = glm::vec3(segment_rotation_matrix * glm::vec4(local_cart_position - data.start_point, 0.0f));
+    const auto world_offset = glm::vec3(segment_rotation_matrix * glm::vec4(local_cart_position - data.start_point, 0.0f));
     const glm::vec3 world_cart_position = segment_position + world_offset;
 
     const glm::vec3 world_tangent = glm::normalize(glm::vec3(segment_rotation_matrix * glm::vec4(local_tangent, 0.0f)));

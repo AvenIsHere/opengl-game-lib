@@ -23,27 +23,14 @@ std::unordered_map<int, bool> InputManager::hold_keys;
 std::map<int, std::function<void(float)>> InputManager::hold_functions;
 std::map<int, std::function<void()>> InputManager::tap_functions;
 
-void InputManager::handle_input_down(unsigned char key, int x, int y) {
+void InputManager::handle_input(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (std::isupper(key)) key = std::tolower(key);
-    hold_keys[key] = true;
-    if (tap_functions.count(key)) tap_functions[key]();
-}
-
-void InputManager::handle_input_up(unsigned char key, int x, int y) {
-    if (std::isupper(key)) key = std::tolower(key);
-    hold_keys[key] = false;
-}
-
-void InputManager::handle_input_down(const int key, int x, int y) {
-    hold_keys[key + 256] = true;
+    bool set = action == GLFW_PRESS || GLFW_REPEAT;
+    hold_keys[key + 256] = set;
     if (tap_functions.count(key + 256)) tap_functions[key + 256]();
 }
 
-void InputManager::handle_input_up(const int key, int x, int y) {
-    hold_keys[key + 256] = false;
-}
-
-void InputManager::update(int time_elapsed, float delta_time) {
+void InputManager::update(const float delta_time) {
     for (const auto&[key, func] : hold_functions) {
         if (hold_keys[key]) {
             func(delta_time);

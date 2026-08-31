@@ -24,6 +24,8 @@
 #include "Light.h"
 using json = nlohmann::json;
 
+#include <GLFW/glfw3.h>
+
 #include "objects/SceneObject.h"
 
 
@@ -50,9 +52,9 @@ public:
 
     Scene(int screen_width, int screen_height, const json& given_json_data);
 
-    void update(int time_elapsed, int prev_time_elapsed);
-    void update_view(int time_elapsed);
-    void render() const;
+    void update(double time_elapsed, double prev_time_elapsed);
+    void update_view(double time_elapsed);
+    void render(GLFWwindow* window) const;
 
     void add_object(const std::shared_ptr<SceneObject>& obj);
     void add_objects(const std::vector<std::shared_ptr<SceneObject>>& given_objects);
@@ -82,7 +84,7 @@ private:
     std::vector<std::shared_ptr<CoasterTrack>> coasters;
     std::vector<std::shared_ptr<SceneObject>> objects;
 
-    std::function<void(int)> on_update;
+    std::function<void(double)> on_update;
 
     json json_data;
     void load_config(const json& given_json_data);

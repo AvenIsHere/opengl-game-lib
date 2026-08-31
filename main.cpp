@@ -15,9 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <GL/glew.h>
-#include <GL/glut.h>
-#include <GL/freeglut_ext.h>
 #include <glm/glm.hpp>
+
+#include <GLFW/glfw3.h>
 
 #include <filesystem>
 #include <fstream>
@@ -34,9 +34,12 @@
 namespace Application {
     constexpr int SCREEN_WIDTH = 1000;
     constexpr int SCREEN_HEIGHT = 800;
-    int time_elapsed = 0;
-    int prev_time_elapsed = 0;
+    double time_elapsed = 0;
+    double prev_time_elapsed = 0;
     std::unique_ptr<Scene> scene = nullptr;
+
+
+    GLFWwindow* window;
 
     json get_json(const std::string& path) {
         std::ifstream f(path);
@@ -52,25 +55,25 @@ namespace Application {
         }
     }
 
-    void run() {
-        glutMainLoop();
-    }
-
-    void update(int value) {
-        time_elapsed = glutGet(GLUT_ELAPSED_TIME);
+    void update() {
+        time_elapsed = glfwGetTime();
         const auto delta_time = static_cast<float>(time_elapsed - prev_time_elapsed);
         scene->update(time_elapsed, prev_time_elapsed);
-        InputManager::update(time_elapsed, delta_time);
+        InputManager::update(delta_time);
         prev_time_elapsed = time_elapsed;
-
-        glutTimerFunc(16, update, 0);
     }
 
-    void render() {
-        scene->render();
+    void run() {
+        while (!glfwWindowShouldClose(window)) {
+            scene->render(window);
+            glfwPollEvents();
+            update();
+        }
+        glfwDestroyWindow(window);
+        glfwTerminate();
     }
 
-    void screen_resize(const int width, const int height) {
+    void screen_resize(GLFWwindow* given_window, const int width, const int height) {
         scene->screen_resize(width, height);
     }
 
@@ -136,34 +139,30 @@ namespace Application {
         return std::make_shared<CoasterTrack>("config/default_coaster.json", glm::vec3{-20, 1, -60}, get_json("config/default_coaster.json")["cart_model"]);
     }
 
-    void init(int argc, char** argv, int screen_width, int screen_height, const std::string& scene_config) {
-        glutInit(&argc, argv);
-        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-        glutCreateWindow("Test");
+    void init(int screen_width, int screen_height, const std::string& scene_config) {
+
+        if (!glfwInit()) throw std::runtime_error("GLFW did not initialise.");
+
+        window = glfwCreateWindow(screen_width, screen_height, "Test", nullptr, nullptr);
+        if (!window) {glfwTerminate(); throw std::runtime_error("GLFW failed to create window.");}
+
+        glfwMakeContextCurrent(window);
 
         glewExperimental = GL_TRUE;
         if (const GLenum err = glewInit(); GLEW_OK != err) {
             std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
         }
 
-        glutDisplayFunc(render);
+        glfwSetKeyCallback(window, InputManager::handle_input);
 
-        glutKeyboardFunc(InputManager::handle_input_down);
-        glutKeyboardUpFunc(InputManager::handle_input_up);
-
-        glutSpecialFunc(InputManager::handle_input_down);
-        glutSpecialUpFunc(InputManager::handle_input_up);
-
-        glutReshapeFunc(screen_resize);
-
-        glutTimerFunc(0, update, 0);
+        glfwSetFramebufferSizeCallback(window, screen_resize);
 
         scene = std::make_unique<Scene>(screen_width, screen_height, get_json(scene_config));
     }
 }
 
-int main(const int argc, char** argv) {
-    Application::init(argc, argv, Application::SCREEN_WIDTH, Application::SCREEN_HEIGHT, "config/scene_config.json");
+int main() {
+    Application::init(Application::SCREEN_WIDTH, Application::SCREEN_HEIGHT, "config/scene_config.json");
     Application::load_from_json("config/shaders", "config/materials", "config/models", "config/tracks.json", "config/objects.json");
 
     auto coaster = Application::load_default_coaster();
@@ -176,16 +175,16 @@ int main(const int argc, char** argv) {
         {'a', [](const float dt){Application::scene->move(Scene::LEFT, Application::scene->get_speed() * dt / 16.0f);}},
         {'d', [](const float dt){Application::scene->move(Scene::RIGHT, Application::scene->get_speed() * dt / 16.0f);}},
         {' ', [](const float dt){Application::scene->move(Scene::UP, Application::scene->get_speed() * dt / 16.0f);}},
-        {GLUT_KEY_SHIFT_L, [](const float dt){Application::scene->move(Scene::DOWN, Application::scene->get_speed() * dt / 16.0f);}, true},
+        {GLFW_KEY_LEFT_SHIFT, [](const float dt){Application::scene->move(Scene::DOWN, Application::scene->get_speed() * dt / 16.0f);}, true},
 
         // rotation
-        {GLUT_KEY_LEFT, [](const float dt){Application::scene->rotate(Scene::X, -0.02f * dt / 16.0f);}, true},
-        {GLUT_KEY_RIGHT, [](const float dt){Application::scene->rotate(Scene::X, 0.02f * dt / 16.0f);}, true},
-        {GLUT_KEY_UP, [](const float dt){Application::scene->rotate(Scene::Y, -0.013f * dt / 16.0f);}, true},
-        {GLUT_KEY_DOWN, [](const float dt){Application::scene->rotate(Scene::Y, 0.013f * dt / 16.0f);}, true},
+        {GLFW_KEY_LEFT, [](const float dt){Application::scene->rotate(Scene::X, -0.02f * dt / 16.0f);}, true},
+        {GLFW_KEY_RIGHT, [](const float dt){Application::scene->rotate(Scene::X, 0.02f * dt / 16.0f);}, true},
+        {GLFW_KEY_UP, [](const float dt){Application::scene->rotate(Scene::Y, -0.013f * dt / 16.0f);}, true},
+        {GLFW_KEY_DOWN, [](const float dt){Application::scene->rotate(Scene::Y, 0.013f * dt / 16.0f);}, true},
 
         // exit on esc
-        {27, [](float){glutLeaveMainLoop();}},
+        {GLFW_KEY_ESCAPE, [](float){glfwSetWindowShouldClose(Application::window, true);}},
     });
 
     InputManager::add_tap_mappings({

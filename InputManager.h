@@ -18,6 +18,7 @@
 #define GRAPHICS_COURSEWORK_INPUTMANAGER_H
 #include <functional>
 #include <map>
+#include <GLFW/glfw3.h>
 
 struct InputMapping {
     int key;
@@ -41,14 +42,9 @@ class InputManager {
 public:
 
     //handle ASCII input
-    static void handle_input_down(unsigned char key, int x, int y);
-    static void handle_input_up(unsigned char key, int x, int y);
+    static void handle_input(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    //handle special character input
-    static void handle_input_down(int key, int x, int y);
-    static void handle_input_up(int key, int x, int y);
-
-    static void update(int time_elapsed, float delta_time);
+    static void update(float delta_time);
 
     static void add_hold_mapping(int key, std::function<void(float)> func, bool special=false);
     static void add_hold_mappings(const std::vector<HoldMapping>& mappings);

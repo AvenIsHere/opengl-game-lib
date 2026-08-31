@@ -16,13 +16,13 @@
 
 #include "Scene.h"
 
-#include <GL/freeglut_std.h>
 
 #include "GlmMaths.h"
 
 #include <cmath>
 #include <fstream>
 #include <random>
+#include <GLFW/glfw3.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
@@ -35,17 +35,16 @@ Scene::Scene(const int screen_width, const int screen_height, const json& given_
 
     load_config(given_json_data);
 
-    glutReshapeWindow(screen_width, screen_height);
 }
 
-void Scene::render() const {
+void Scene::render(GLFWwindow* window) const {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (const auto & object : objects) {
         object->draw(view_matrix, proj_matrix, light);
     }
 
-    glutSwapBuffers();
+    glfwSwapBuffers(window);
 }
 
 void Scene::add_object(const std::shared_ptr<SceneObject>& obj) {
@@ -157,7 +156,7 @@ void Scene::rotate(const Axis axis, const float given_rotation) {
     }
 }
 
-void Scene::update_view(int time_elapsed) {
+void Scene::update_view(double time_elapsed) {
 
     if (view_type == COASTER && !coasters.empty()) {
         const auto pos = coasters[0]->get_cart_location();
@@ -170,8 +169,7 @@ void Scene::update_view(int time_elapsed) {
     view_matrix = glm::translate(view, -camera_pos);
 }
 
-void Scene::update(const int time_elapsed, const int prev_time_elapsed) {
-    glutPostRedisplay();
+void Scene::update(const double time_elapsed, const double prev_time_elapsed) {
 
     for (const auto& coaster : coasters) {
         coaster->update(time_elapsed, prev_time_elapsed);

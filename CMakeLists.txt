@@ -4,7 +4,7 @@ project(graphics_coursework)
 set(CMAKE_CXX_STANDARD 23)
 
 find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
+find_package(glfw3 REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 
@@ -26,7 +26,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nativefiledialog-extended)
 
-include_directories(${GLUT_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
+include_directories(${GLFW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 
 add_executable(graphics_coursework main.cpp
         Scene.cpp
@@ -60,7 +60,7 @@ add_executable(graphics_coursework main.cpp
         objects/Cart.h
 )
 
-target_link_libraries(graphics_coursework ${OPENGL_LIBRARIES} GLUT::GLUT glm::glm ${GLEW_LIBRARIES} freeimage magic_enum::magic_enum nfd)
+target_link_libraries(graphics_coursework ${OPENGL_LIBRARIES} glfw glm::glm ${GLEW_LIBRARIES} freeimage magic_enum::magic_enum nfd)
 
 add_custom_target(copy-files
         COMMAND ${CMAKE_COMMAND} -E copy_directory

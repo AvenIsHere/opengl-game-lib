@@ -56,15 +56,15 @@ public:
     [[nodiscard]] glm::vec3 get_cart_location() const;
     [[nodiscard]] glm::vec3 get_cart_size() const;
 
-    void start_cart(float speed);
+    void start_cart(double speed);
     void stop_cart();
-    void set_cart_speed(float speed);
+    void set_cart_speed(double speed);
 
-    void change_cart_speed(float change);
+    void change_cart_speed(double change);
 
-    void update(int time_elapsed, int prev_time_elapsed);
+    void update(double time_elapsed, double prev_time_elapsed);
 
-    [[nodiscard]] std::vector<std::shared_ptr<SceneObject>> get_model_objs();
+    [[nodiscard]] std::vector<std::shared_ptr<SceneObject>> get_model_objs() const;
 
 private:
 
@@ -76,8 +76,8 @@ private:
     glm::vec3 rotation{};
 
     int current_segment = 0;
-    float segment_progress = 0.0f;
-    float cart_speed = 0.01f;
+    double segment_progress = 0.0f;
+    double cart_speed = 0.01f;
     bool is_moving = false;
 
     std::vector<std::string> track;
