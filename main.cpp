@@ -158,7 +158,10 @@ namespace Application {
         glfwSetFramebufferSizeCallback(window, screen_resize);
 
         scene = std::make_unique<Scene>(screen_width, screen_height, get_json(scene_config));
-        screen_resize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+        int width_given, height_given;
+        glfwGetFramebufferSize(window, &width_given, &height_given);
+        screen_resize(window, width_given, height_given);
     }
 }
 
