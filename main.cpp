@@ -56,7 +56,7 @@ namespace Application {
     }
 
     void update() {
-        time_elapsed = glfwGetTime();
+        time_elapsed = glfwGetTime() * 1000.0;
         const auto delta_time = static_cast<float>(time_elapsed - prev_time_elapsed);
         scene->update(time_elapsed, prev_time_elapsed);
         InputManager::update(delta_time);
@@ -158,6 +158,7 @@ namespace Application {
         glfwSetFramebufferSizeCallback(window, screen_resize);
 
         scene = std::make_unique<Scene>(screen_width, screen_height, get_json(scene_config));
+        screen_resize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
     }
 }
 
@@ -170,18 +171,18 @@ int main() {
 
     InputManager::add_hold_mappings({
         // movement
-        {'w', [](const float dt){Application::scene->move(Scene::FORWARDS, Application::scene->get_speed() * dt / 16.0f);}},
-        {'s', [](const float dt){Application::scene->move(Scene::BACKWARDS, Application::scene->get_speed() * dt / 16.0f);}},
-        {'a', [](const float dt){Application::scene->move(Scene::LEFT, Application::scene->get_speed() * dt / 16.0f);}},
-        {'d', [](const float dt){Application::scene->move(Scene::RIGHT, Application::scene->get_speed() * dt / 16.0f);}},
-        {' ', [](const float dt){Application::scene->move(Scene::UP, Application::scene->get_speed() * dt / 16.0f);}},
-        {GLFW_KEY_LEFT_SHIFT, [](const float dt){Application::scene->move(Scene::DOWN, Application::scene->get_speed() * dt / 16.0f);}, true},
+        {GLFW_KEY_W, [](const float dt){Application::scene->move(Scene::FORWARDS, Application::scene->get_speed() * dt / 16.0f);}},
+        {GLFW_KEY_S, [](const float dt){Application::scene->move(Scene::BACKWARDS, Application::scene->get_speed() * dt / 16.0f);}},
+        {GLFW_KEY_A, [](const float dt){Application::scene->move(Scene::LEFT, Application::scene->get_speed() * dt / 16.0f);}},
+        {GLFW_KEY_D, [](const float dt){Application::scene->move(Scene::RIGHT, Application::scene->get_speed() * dt / 16.0f);}},
+        {GLFW_KEY_SPACE, [](const float dt){Application::scene->move(Scene::UP, Application::scene->get_speed() * dt / 16.0f);}},
+        {GLFW_KEY_LEFT_SHIFT, [](const float dt){Application::scene->move(Scene::DOWN, Application::scene->get_speed() * dt / 16.0f);}},
 
         // rotation
-        {GLFW_KEY_LEFT, [](const float dt){Application::scene->rotate(Scene::X, -0.02f * dt / 16.0f);}, true},
-        {GLFW_KEY_RIGHT, [](const float dt){Application::scene->rotate(Scene::X, 0.02f * dt / 16.0f);}, true},
-        {GLFW_KEY_UP, [](const float dt){Application::scene->rotate(Scene::Y, -0.013f * dt / 16.0f);}, true},
-        {GLFW_KEY_DOWN, [](const float dt){Application::scene->rotate(Scene::Y, 0.013f * dt / 16.0f);}, true},
+        {GLFW_KEY_LEFT, [](const float dt){Application::scene->rotate(Scene::X, -0.02f * dt / 16.0f);}},
+        {GLFW_KEY_RIGHT, [](const float dt){Application::scene->rotate(Scene::X, 0.02f * dt / 16.0f);}},
+        {GLFW_KEY_UP, [](const float dt){Application::scene->rotate(Scene::Y, -0.013f * dt / 16.0f);}},
+        {GLFW_KEY_DOWN, [](const float dt){Application::scene->rotate(Scene::Y, 0.013f * dt / 16.0f);}},
 
         // exit on esc
         {GLFW_KEY_ESCAPE, [](float){glfwSetWindowShouldClose(Application::window, true);}},
@@ -189,27 +190,27 @@ int main() {
 
     InputManager::add_tap_mappings({
         // edit track
-        {'1', [coaster]{Application::scene->add_track_to_coaster(coaster, "straight");}},
-        {'2', [coaster]{Application::scene->add_track_to_coaster(coaster, "left");}},
-        {'3', [coaster]{Application::scene->add_track_to_coaster(coaster, "right");}},
-        {'4', [coaster]{Application::scene->add_track_to_coaster(coaster, "loop");}},
-        {'5', [coaster]{Application::scene->add_track_to_coaster(coaster, "step_up");}},
-        {'6', [coaster]{Application::scene->add_track_to_coaster(coaster, "step_down");}},
-        {8, [coaster]{Application::scene->pop_track_from_coaster(coaster);}},
+        {GLFW_KEY_1, [coaster]{Application::scene->add_track_to_coaster(coaster, "straight");}},
+        {GLFW_KEY_2, [coaster]{Application::scene->add_track_to_coaster(coaster, "left");}},
+        {GLFW_KEY_3, [coaster]{Application::scene->add_track_to_coaster(coaster, "right");}},
+        {GLFW_KEY_4, [coaster]{Application::scene->add_track_to_coaster(coaster, "loop");}},
+        {GLFW_KEY_5, [coaster]{Application::scene->add_track_to_coaster(coaster, "step_up");}},
+        {GLFW_KEY_6, [coaster]{Application::scene->add_track_to_coaster(coaster, "step_down");}},
+        {GLFW_KEY_BACKSPACE, [coaster]{Application::scene->pop_track_from_coaster(coaster);}},
 
         // save or load track
-        {'p', [coaster]{coaster->save_to_file();}},
-        {'l', [coaster]{Application::scene->load_coaster_from_file(coaster);}},
+        {GLFW_KEY_P, [coaster]{coaster->save_to_file();}},
+        {GLFW_KEY_L, [coaster]{Application::scene->load_coaster_from_file(coaster);}},
 
         // toggle view
-        {'v', [] {
+        {GLFW_KEY_V, [] {
                 if (Application::scene->get_view() == Scene::COASTER) Application::scene->set_view(Scene::FREEROAM);
                 else Application::scene ->set_view(Scene::COASTER);
         }},
-        {'g', [coaster]{ coaster->start_cart(0.001f);}},
-        {'=', [coaster]{coaster->change_cart_speed(0.0003);}},
-        {'-', [coaster]{coaster->change_cart_speed(-0.0003);}},
-        {'h', [coaster]{ coaster->stop_cart();}},
+        {GLFW_KEY_G, [coaster]{ coaster->start_cart(0.001f);}},
+        {GLFW_KEY_EQUAL, [coaster]{coaster->change_cart_speed(0.0003);}},
+        {GLFW_KEY_MINUS, [coaster]{coaster->change_cart_speed(-0.0003);}},
+        {GLFW_KEY_H, [coaster]{ coaster->stop_cart();}},
     });
 
     Application::run();

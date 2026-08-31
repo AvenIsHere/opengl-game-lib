@@ -23,13 +23,11 @@
 struct InputMapping {
     int key;
     std::function<void()> function;
-    bool special = false;
 };
 
 struct HoldMapping {
     int key;
     std::function<void(float)> function;
-    bool special = false;
 };
 
 class InputManager {
@@ -46,10 +44,10 @@ public:
 
     static void update(float delta_time);
 
-    static void add_hold_mapping(int key, std::function<void(float)> func, bool special=false);
+    static void add_hold_mapping(int key, std::function<void(float)> func);
     static void add_hold_mappings(const std::vector<HoldMapping>& mappings);
 
-    static void add_tap_mapping(int key, std::function<void()> func, bool special=false);
+    static void add_tap_mapping(int key, std::function<void()> func);
     static void add_tap_mappings(const std::vector<InputMapping>& mappings);
 };
 
